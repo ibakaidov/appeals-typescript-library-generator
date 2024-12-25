@@ -4,6 +4,14 @@
   "main": "dist/index.js",
   "author": "ibakaidov",
   "license": "MIT",
+  "scripts": {
+    "build": "tsc",
+    "postinstall": "npm run build"
+
+  },
+  "bin": {
+    "appeals-typescript-library-generator": "dist/index.js"
+  },
   "dependencies": {
     "@types/node": "^22.10.2",
     "axios": "^1.7.9",
