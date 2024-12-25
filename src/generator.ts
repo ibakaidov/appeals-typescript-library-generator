@@ -133,6 +133,11 @@ export const ${model.model_name}CRUD = {
     async delete(id: number) {
         const response = await getAPIAxiosInstance().delete('/crud/${toSnakeCase(model.model_name)}/'+id);
         return this.mapResponse(response.data);
+    },
+
+    async count(): Promise<number> {
+        const response = await getAPIAxiosInstance().get('/crud/${toSnakeCase(model.model_name)}/count');
+        return response.data.count;
     }
 
 };`;
