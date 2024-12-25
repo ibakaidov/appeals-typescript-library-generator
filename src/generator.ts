@@ -45,7 +45,7 @@ export class Generator {
         const files: File[] = [];
         for (const model of this.schema.models) {
             const content =
-                `export interface ${model.model_name} {\n${model.fields.map(f => `   ${toCamelCaseWithFirstLower(f.field_name)+(f.is_optional?'?':'')}: ${this.#convertType(f.type)} // ${toSnakeCase(f.field_name)}`).join('\n')}\n}`;
+                `export interface ${model.model_name} {\n${model.fields.map(f => `   ${toCamelCaseWithFirstLower(f.field_name) + (f.is_optional ? '?' : '')}: ${this.#convertType(f.type)} // ${toSnakeCase(f.field_name)}`).join('\n')}\n}`;
             files.push({ name: `types/${model.model_name}.ts`, content });
         }
 
@@ -58,7 +58,10 @@ export class Generator {
         console.log('Generating entry point...');
         const files: File[] = [];
         const content = `export * from './types';
-export * from './utils';`;
+export * from './utils';
+${this.schema.models.map(m => `export * from './services/${m.model_name}';`).join('\n')}
+${this.schema.models.map(m => `export * from './methods/${m.model_name}';`).join('\n')}`;
+
 
         files.push({ name: 'index.ts', content });
         return files;
@@ -147,6 +150,7 @@ export const ${model.model_name}CRUD = {
             const content = `
             import { ${model.model_name} } from '../types'; import { getAPIAxiosInstance } from '../utils';
             import { ${model.model_name}CRUD } from '../services/${model.model_name}';
+            ${model.edges.map(e => e.type).filter((value, index, self) => self.indexOf(value) === index).map(e => `import { ${e}CRUD } from '../services/${e}';`).join('\n')}
             export interface ${model.model_name}SearchInput {
             ${model.fields.map(f => {
                 if (f.type === 'string') {
@@ -177,32 +181,42 @@ export const ${model.model_name}API = {
     },
 
     ${model.edges.map(e => {
-                return `async get${e.edge_name[0].toUpperCase() + e.edge_name.slice(1)}(id: number) {
+                if (e.direction === 'to') {
+                    return `async get${e.edge_name[0].toUpperCase() + toCamelCaseWithFirstLower(e.edge_name.slice(1))}(id: number) {
         const response = await getAPIAxiosInstance().get('/api/${toSnakeCase(model.model_name)}/'+id+'/${e.edge_name}');
+        const responseObj = Array.isArray(response.data) ? response.data.map((item:any) => ${e.type}CRUD.mapResponse(item)) : ${e.type}CRUD.mapResponse(response.data);
+        return responseObj; 
+    },
+    async connect${e.edge_name[0].toUpperCase() + toCamelCaseWithFirstLower(e.edge_name.slice(1))}(id: number, ${e.edge_name}Id: number) {
+        const response = await getAPIAxiosInstance().post('/api/${toSnakeCase(model.model_name)}/'+id+'/${e.edge_name}', { ${e.edge_name}_id: ${e.edge_name}Id });
+        return this.get${e.edge_name[0].toUpperCase() + toCamelCaseWithFirstLower(e.edge_name.slice(1))}(id);
+    },
+    async disconnect${e.edge_name[0].toUpperCase() + toCamelCaseWithFirstLower(e.edge_name.slice(1))}(id: number) {
+        const response = await getAPIAxiosInstance().delete('/api/${toSnakeCase(model.model_name)}/${e.edge_name}', { params: { id } });
+        return this.get${e.edge_name[0].toUpperCase() + toCamelCaseWithFirstLower(e.edge_name.slice(1))}(id);
+    },`
+                }
+                else {
+                    return `async get${model.model_name}By${e.edge_name[0].toUpperCase() + toCamelCaseWithFirstLower(e.edge_name.slice(1))}(id: number) {
+        const response = await getAPIAxiosInstance().get('/api/${toSnakeCase(model.model_name)}/'+id);  
         const responseObj = ${model.model_name}CRUD.mapResponse(response.data);
         return responseObj;
-    },
-    async connect${e.edge_name[0].toUpperCase() + e.edge_name.slice(1)}(id: number, ${e.edge_name}Id: number) {
-        const response = await getAPIAxiosInstance().post('/api/${toSnakeCase(model.model_name)}/'+id+'/${e.edge_name}', { ${e.edge_name}_id: ${e.edge_name}Id });
-        return ${model.model_name}CRUD.mapResponse(response.data);
-    },
-    async disconnect${e.edge_name[0].toUpperCase() + e.edge_name.slice(1)}(id: number) {
-        const response = await getAPIAxiosInstance().delete('/api/${toSnakeCase(model.model_name)}/${e.edge_name}', { params: { id } });
-        return ${model.model_name}CRUD.mapResponse(response.data);
-    },`
+    },` 
+
+                }
             }
             ).join('\n')}
 };`;
             files.push({ name: `methods/${model.model_name}.ts`, content })
         }
         return files;
-        
+
     }
 
     #convertType(type: string): string {
         // type = type.trim().toLowerCase();
         switch (type) {
-        
+
             case 'int': return 'number';
             case '[]int': return 'number[]';
             case 'string': return 'string';
@@ -225,7 +239,7 @@ export const ${model.model_name}API = {
                 map += `\n            ${toCamelCaseWithFirstLower(field.field_name)}: (()=>{let d = new Date(item.${toSnakeCase(field.field_name)}); return d.getTime()==0 ? ${field.is_optional ? 'undefined' : 'd'} : d;})(),`;
             } else if (type === 'Date[]') {
                 map += `\n            ${toCamelCaseWithFirstLower(field.field_name)}: item.${toSnakeCase(field.field_name)}.map((d:any)=>{let date = new Date(d); return date.getTime()==0 ? ${field.is_optional ? 'undefined' : 'date'} : date;}),`;
-            }                                                                                                                                        
+            }
             else {
                 map += `\n            ${toCamelCaseWithFirstLower(field.field_name)}: item.${toSnakeCase(field.field_name)},`;
             }
