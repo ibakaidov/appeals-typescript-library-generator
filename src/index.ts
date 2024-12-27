@@ -5,7 +5,7 @@ import { ISchema } from "./ISchema";
 async function main(schemaUrl = 'http://localhost:8080/static/schema.json', outputDir = 'src/generated') {
     let schema: ISchema;
     if (schemaUrl.startsWith('unix:')) {
-        const data = await axios.get<ISchema>(schemaUrl.split(':')[1], { socketPath: schemaUrl.split(':')[0] })
+        const data = await axios.get<ISchema>(schemaUrl.split('|')[1], { socketPath: schemaUrl.split('|')[0].split(':')[1] });
         schema = data.data;
 
     } else {
