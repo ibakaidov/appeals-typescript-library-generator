@@ -189,7 +189,7 @@ export const ${model.model_name}API = {
                 if (e.direction === 'to') {
                     return `async get${e.edge_name[0].toUpperCase() + toCamelCaseWithFirstLower(e.edge_name.slice(1))}(id: string) {
         const response = await getAPIAxiosInstance().get('/api/${toSnakeCase(model.model_name)}/'+id+'/${e.edge_name}');
-        const resp?onseObj = Array.isArray(response.data) ? response.data.map((item:any) => ${e.type}CRUD.mapResponse(item)) : ${e.type}CRUD.mapResponse(response.data);
+        const responseObj = Array.isArray(response.data) ? response.data.map((item:any) => ${e.type}CRUD.mapResponse(item)) : ${e.type}CRUD.mapResponse(response.data);
         return responseObj; 
     },
     async connect${e.edge_name[0].toUpperCase() + toCamelCaseWithFirstLower(e.edge_name.slice(1))}(id: string, ${e.edge_name}Id: string) {
