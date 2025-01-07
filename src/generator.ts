@@ -193,7 +193,7 @@ export const ${model.model_name}API = {
         return responseObj; 
     },
     async connect${e.edge_name[0].toUpperCase() + toCamelCaseWithFirstLower(e.edge_name.slice(1))}(id: string, ${e.edge_name}Id: string) {
-        const response = await getAPIAxiosInstance().post('/api/${toSnakeCase(model.model_name)}/'+id+'/${e.edge_name}', { ${e.edge_name}_id: ${e.edge_name}Id });
+        const response = await getAPIAxiosInstance().post('/api/${toSnakeCase(model.model_name)}/'+id+'/${e.edge_name}', { id: ${e.edge_name}Id });
         return this.get${e.edge_name[0].toUpperCase() + toCamelCaseWithFirstLower(e.edge_name.slice(1))}(id);
     },
     async disconnect${e.edge_name[0].toUpperCase() + toCamelCaseWithFirstLower(e.edge_name.slice(1))}(id: string, ${e.edge_name}Id: string) {
