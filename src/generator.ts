@@ -186,7 +186,7 @@ export const ${model.model_name}API = {
     },
 
     ${model.edges.map(e => {
-                if (e.direction === 'to') {
+                if (e.direction !== 'to') {
                     return `async get${e.edge_name[0].toUpperCase() + toCamelCaseWithFirstLower(e.edge_name.slice(1))}(id: string) {
         const response = await getAPIAxiosInstance().get('/api/${toSnakeCase(model.model_name)}/'+id+'/${e.edge_name}');
         const responseObj = Array.isArray(response.data) ? response.data.map((item:any) => ${e.type}CRUD.mapResponse(item)) : ${e.type}CRUD.mapResponse(response.data);
